@@ -1,0 +1,14 @@
+version: "2"
+
+services:
+  backend-dev:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    image: backend-dev:latest
+    ports:
+      - 8000:8000
+    volumes:
+      - ../backend:/code
+      - ../logs:/logs
+    entrypoint: /code/start-dev.sh

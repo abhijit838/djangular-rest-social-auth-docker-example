@@ -1,0 +1,13 @@
+# Dev Dockerfile
+# Starting with a base python image
+FROM python:3
+
+MAINTAINER ['Abhijit Maity', 'abhijit.maity2010@gmail.com']
+
+# Force stdin, stdout and stderr - buffer
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /code /logs
+WORKDIR /code
+VOLUME ["/code", "/logs"]
+ADD . /code/
+RUN pip install -r requirements/requirements-dev.txt

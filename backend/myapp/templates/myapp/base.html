@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+    <title></title>
+</head>
+<body>
+<div ng-app="TokenApp">
+    <div ng-controller="LoginTokenCtrl as ctrl">
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <md-button class="md-icon-button" aria-label="Icon">
+                    <md-icon md-svg-icon='{% static "images/icon.svg" %}'></md-icon>
+                </md-button>
+                <h2>
+                    <span>Portfolio</span>
+                </h2>
+                <span flex></span>
+                <div id="user-activities">
+                    <md-button class="md-icon-button" aria-label="Trending">
+                        <md-tooltip>Trending</md-tooltip>
+                        <i class="material-icons">whatshot</i>
+                    </md-button>
+                    <md-button class="md-icon-button" aria-label="Following">
+                        <md-tooltip>Following</md-tooltip>
+                        <i class="material-icons">group</i>
+                    </md-button>
+                    <md-button class="md-icon-button" aria-label="Notifications">
+                        <md-tooltip>Nitifications</md-tooltip>
+                        <i class="material-icons">notifications</i>
+                    </md-button>
+                    <div class="profile">
+                        <md-button class="md-icon-button" aria-label="User">
+                            {% verbatim %}
+                            <img ng-src='{{ctrl.user.thumb}}'/>
+                            {% endverbatim %}
+                        </md-button>
+                        <div class="details">
+                            <a href="#">
+                                <span ng-bind="ctrl.user.first_name"></span>&nbsp;
+                                <span ng-bind="ctrl.user.last_name"></span>
+                            </a>
+                            <a href="#"><span ng-bind="ctrl.user.email"></span></a>
+                            <md-button class="md-flat md-accent" ng-click="logout()">Logout</md-button>
+                        </div>
+                    </div>
+                </div>
+                <div id="login">
+                    <div class="profile">
+                        <md-button class="md-icon-button" aria-label="User">
+                            <i class="material-icons">account_circle</i>
+                        </md-button>
+                        <div class="details">
+                            <a ng-click="authenticate('facebook')"><img src='{% static "images/facebook.png" %}'/>
+                            </a>
+                            <a ng-click="authenticate('google')"><img src='{% static "images/google.png" %}'/></a>
+                            <a ng-click="authenticate('twitter')"><img src='{% static "images/twitter.png" %}'/></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </md-toolbar>
+    </div>
+</div>
+{% block content %}
+
+{% endblock content %}
+{% block scripts %}
+<!--Stylesheets-->
+<!-- Angular Material CSS now available via Google CDN; version 0.9.4 used here -->
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href='{% static "css/default.css" %}'>
+
+<!--Scripts-->
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<!-- Angular Material Dependencies -->
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
+<!-- Angular Material Javascript now available via Google CDN; version 0.9.4 used here -->
+<script src="//ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.js"></script>
+<script src="https://cdn.jsdelivr.net/satellizer/0.13.0/satellizer.min.js"></script>
+<script type="text/javascript">
+        function set_user(response){
+            var source;
+            if (response){
+                source = response.data;
+            } else {
+                source = {
+                    'username': null,
+                    'first_name': null,
+                    'last_name': null,
+                    'email': null,
+                    'social_thumb': null
+                };
+            }
+            self.user.username = source.username;
+            self.user.first_name = source.first_name;
+            self.user.last_name = source.last_name;
+            self.user.email = source.email;
+            self.user.thumb = source.social_thumb;
+        };
+        angular.module('TokenApp', ['satellizer', 'ngMaterial'])
+            .config(function($authProvider) {
+                $authProvider.facebook({
+                  url: "{% url 'login_social_token_user' provider='facebook' %}",
+                  clientId: '1928591794026322'
+                });
+                $authProvider.google({
+                  url: "{% url 'login_social_token_user' provider='google-oauth2' %}",
+                  clientId: '648742969843-8arnpuhrchb05694patg9oa4sl8gnn0j.apps.googleusercontent.com',
+                  redirectUri: window.location.origin + '/'
+                });
+                $authProvider.twitter({
+                  url: "{% url 'login_social_token_user' provider='twitter' %}",
+                });
+                $authProvider.authToken = 'Token';
+            }).controller('LoginTokenCtrl', function($scope, $auth, $http) {
+                self = this;
+                self.user = {};
+                set_user();
+                if ($auth.getToken()){
+                    $http.get('{% url "current_user_token" %}').then(function(response){
+                        set_user(response);
+                    });
+                    logged_in();
+                } else {
+                    logged_out();
+                }
+                $scope.authenticate = function(provider) {
+                    $auth.authenticate(provider).then(function(response){
+                        $auth.setToken(response.data.token);
+                        set_user(response);
+                        logged_in();
+                    });
+                };
+                $scope.logout = function(){
+                    $auth.removeToken();
+                    set_user();
+                    logged_out();
+                };
+                function logged_in(){
+                    $('#user-activities').fadeIn();
+                    $('#login').hide();
+                }
+                function logged_out(){
+                    $('#user-activities').hide();
+                    $('#login').show();
+                }
+        });
+        <!--Any time jwt auth can be used by replacing the URLs for jwt => 'login_social_jwt_user', 'current_user_jwt'-->
+
+
+
+</script>
+{% endblock scripts %}
+</body>
+</html>
