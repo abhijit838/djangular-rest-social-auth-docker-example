@@ -1,5 +1,4 @@
 ## Django REST api with Angular(Cross Platform Dev setup) :
-    Backend directory : RootDir > backend
 
 ### Tools :
     * Git
