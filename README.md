@@ -1,4 +1,5 @@
 ## Django REST api with Angular(Cross Platform Dev setup) :
+    Change dir to root dir
 
 ### Tools :
     * Git
